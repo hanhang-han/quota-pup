@@ -27,6 +27,9 @@ cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
 <key>CFBundleExecutable</key><string>QuotaPup</string>
 <key>CFBundleIdentifier</key><string>local.quotapup.prototype</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+<key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
 <key>CFBundleName</key><string>余粮</string>
 <key>CFBundleDisplayName</key><string>余粮</string>
 <key>CFBundleShortVersionString</key><string>0.4.1</string>
@@ -36,6 +39,7 @@ cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+printf 'APPL????' > "$app_dir/Contents/PkgInfo"
 mkdir -p "$project_dir/.build/module-cache"
 target_arch="${QUOTAPUP_ARCH:-$(uname -m)}"
 case "$target_arch" in

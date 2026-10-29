@@ -32,8 +32,11 @@ API Key 登录不能用于查询 ChatGPT 订阅额度。首次登录和共享令
 
 ## 构建与运行
 
-预编译应用在 [GitHub Releases](https://github.com/hanhang-han/quota-pup/releases) 发布。v0.4.0 只有本地 ad-hoc 签名，下载后可能被 Gatekeeper 阻止；该下载已撤回，正在准备正式签名、公证的修正版。源码仍可按以下步骤自行编译。
-后续分发包必须完成 Developer ID Application 签名、Apple 公证和票据装订，发布脚本会逐步验证。正式公证通过前，不将本地签名校验等同于 Gatekeeper 放行。
+预编译应用在 [GitHub Releases](https://github.com/hanhang-han/quota-pup/releases) 下载。v0.4.1 已完成 Developer ID Application 正式签名、Apple 公证和票据装订，并通过本机 Gatekeeper 校验。当前发布包为 Apple Silicon（arm64），最低编译目标为 macOS 14。
+
+下载 ZIP 并解压，将“余粮.app”拖到“应用程序”目录后启动。若之前下载过被拦截的 v0.4.0，请重新下载 v0.4.1；旧下载已撤回。
+
+也可以按以下步骤自行编译。源码本地构建默认使用 ad-hoc 签名；正式分发必须走下方公证发布流程。
 
 ```bash
 git clone https://github.com/hanhang-han/quota-pup.git

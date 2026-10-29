@@ -37,6 +37,11 @@ cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 </dict></plist>
 PLIST
 mkdir -p "$project_dir/.build/module-cache"
-xcrun swiftc -swift-version 5 -O -framework AppKit -module-cache-path "$project_dir/.build/module-cache" "$project_dir"/Sources/*.swift -o "$app_dir/Contents/MacOS/QuotaPup"
+target_arch="${QUOTAPUP_ARCH:-$(uname -m)}"
+case "$target_arch" in
+  arm64|x86_64) ;;
+  *) echo "Unsupported architecture: $target_arch" >&2; exit 1 ;;
+esac
+xcrun swiftc -swift-version 5 -target "${target_arch}-apple-macosx14.0" -O -framework AppKit -module-cache-path "$project_dir/.build/module-cache" "$project_dir"/Sources/*.swift -o "$app_dir/Contents/MacOS/QuotaPup"
 codesign --force --sign - "$app_dir"
 echo "$app_dir"

@@ -32,6 +32,9 @@ API Key 登录不能用于查询 ChatGPT 订阅额度。首次登录和共享令
 
 ## 构建与运行
 
+预编译应用可在 [GitHub Releases](https://github.com/hanhang-han/quota-pup/releases) 下载。选择与 Mac 芯片对应的文件，解压后将“余粮.app”拖到“应用程序”目录即可。
+当前发布包为 Apple Silicon（arm64）版本。应用采用本地 ad-hoc 签名，尚未通过 Apple 公证；也可以按以下步骤自行编译。
+
 ```bash
 git clone https://github.com/hanhang-han/quota-pup.git
 cd quota-pup
@@ -39,7 +42,15 @@ cd quota-pup
 open "build/余粮.app"
 ```
 
-构建不需要下载 Swift 第三方依赖。输出为本地 ad-hoc 签名的应用，尚未进行 Apple 公证，也尚未提供正式发行安装包。
+构建不需要下载 Swift 第三方依赖。编译目标明确为 macOS 14，与应用的最低系统版本声明一致。更早系统与其他设备尚未完成真机兼容性验证。
+
+创建应用压缩包与 SHA-256 校验文件：
+
+```bash
+./release.sh
+```
+
+产物位于 build/release/。打包脚本会先构建并运行离线检查，不会读取真实账号凭证。
 
 默认启动后展开小狗面板。只在菜单栏后台运行：
 

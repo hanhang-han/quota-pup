@@ -16,3 +16,11 @@
 参考其低分辨率单色轮廓、分段停顿与慢速睡眠切帧。彩色图与菜单栏模板图共享像素网格，保留眼睛、口鼻的负空间。
 
 本项目的像素网格为本次重新绘制，未引入以上项目的图片、精灵表或运行时依赖。参考链接用于说明设计来源。
+
+## CodexBar 额度读取
+
+- 上游：https://github.com/steipete/CodexBar
+- 参考模块：CodexOAuthCredentials.swift、CodexOAuthUsageFetcher.swift。
+- 仅抽取并精简本机 OAuth 文件读取、官方 HTTPS 请求和窗口解析到 Sources/QuotaClient.swift。无 CodexBar 应用、CLI 或其他 provider 运行时依赖。
+- 共享令牌只读，不复制上游庞大的刷新、浏览器或账号管理模块。
+- MIT 声明见 [ThirdPartyNotices/CodexBar.txt](ThirdPartyNotices/CodexBar.txt)。

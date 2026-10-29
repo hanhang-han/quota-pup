@@ -15,5 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build and validate pixel assets
         run: ./build.sh
+      - name: Check standalone quota reader
+        run: ./test.sh
       - name: Verify local signature
         run: codesign --verify --deep --strict "build/余粮.app"

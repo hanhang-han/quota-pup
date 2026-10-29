@@ -15,20 +15,6 @@ struct SpriteSheet: Decodable {
     let height: Int
     let states: [Sprite]
 }
-struct RateWindow: Decodable {
-    let usedPercent: Double
-    let windowMinutes: Int
-    let resetsAt: String?
-}
-struct Usage: Decodable {
-    let primary: RateWindow?
-    let secondary: RateWindow?
-    let tertiary: RateWindow?
-}
-struct ProviderResult: Decodable {
-    let usage: Usage?
-}
-
 let resourceURL = Bundle.main.resourceURL!
 let sprites = try! JSONDecoder().decode(SpriteSheet.self, from: Data(contentsOf: resourceURL.appendingPathComponent("sprites.json")))
 
@@ -99,7 +85,8 @@ final class PupController: NSObject, NSApplicationDelegate {
     var lastAnimationKey = ""
     var iconCache: [String: NSImage] = [:]
     var lastFetchSucceeded = false
-    let cliURL = URL(fileURLWithPath: "/Applications/CodexBar.app/Contents/Helpers/CodexBarCLI")
+    let quotaClient = QuotaClient()
+    var lastError: String?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -254,7 +241,7 @@ final class PupController: NSObject, NSApplicationDelegate {
         } else { reset = "恢复时间暂未提供" }
         if unknown {
             title.stringValue = fetching && remaining == nil ? "正在认识你的额度" : "暂时看不到精力"
-            detail.stringValue = remaining == nil ? "稍后会自动再看看" : "保留上次读数，等待重新同步"
+            detail.stringValue = lastError ?? (remaining == nil ? "稍后会自动再看看" : "保留上次读数，等待重新同步")
             number.stringValue = remaining.map { "上次 \(Int($0.rounded()))%" } ?? "—%"
         } else {
             title.stringValue = state.label
@@ -273,52 +260,39 @@ final class PupController: NSObject, NSApplicationDelegate {
         guard !fetching else { return }
         fetching = true
         syncLabel.stringValue = "正在同步"
-        let executable = cliURL
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            let process = Process()
-            process.executableURL = executable
-            process.arguments = ["usage", "--provider", "codex", "--source", "oauth", "--format", "json", "--no-credits"]
-            let output = Pipe()
-            process.standardOutput = output
-            process.standardError = FileHandle.nullDevice
-            var chosen: RateWindow?
-            do {
-                try process.run()
-                let timeout = DispatchWorkItem { if process.isRunning { process.terminate() } }
-                DispatchQueue.global().asyncAfter(deadline: .now() + 35, execute: timeout)
-                let data = output.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-                timeout.cancel()
-                if process.terminationStatus == 0,
-                   let results = try? JSONDecoder().decode([ProviderResult].self, from: data),
-                   let usage = results.first?.usage {
-                    let windows = [usage.primary, usage.secondary, usage.tertiary].compactMap { $0 }
-                        .filter { $0.usedPercent.isFinite && (0...100).contains($0.usedPercent) && $0.windowMinutes > 0 }
-                    chosen = windows.max { $0.usedPercent < $1.usedPercent }
-                }
-            } catch { }
-            let result = chosen
-            DispatchQueue.main.async {
-                guard let self else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            let result: Result<RateWindow, Error>
+            do { result = .success(try await self.quotaClient.fetch()) }
+            catch { result = .failure(error) }
+            await MainActor.run {
                 self.fetching = false
-                self.lastFetchSucceeded = result != nil
-                if let result {
-                    self.currentWindow = result
-                    self.remaining = max(0, min(100, 100 - result.usedPercent))
+                let chosen: RateWindow?
+                switch result {
+                case .success(let window):
+                    chosen = window
+                    self.lastFetchSucceeded = true
+                    self.lastError = nil
+                    self.currentWindow = window
+                    self.remaining = max(0, min(100, 100 - window.usedPercent))
                     self.syncLabel.stringValue = "刚刚同步 · 每分钟看看"
-                } else {
+                case .failure(let error):
+                    chosen = nil
+                    self.lastFetchSucceeded = false
+                    self.lastError = (error as? QuotaError)?.errorDescription ?? "暂时无法同步额度"
                     self.syncLabel.stringValue = "同步暂停 · 稍后重试"
                 }
                 self.render()
                 // Prototype diagnostics: current quota only, no account or credential data.
                 var report: [String: Any] = [
-                    "status": result == nil ? "unavailable" : "ok",
+                    "status": chosen == nil ? "unavailable" : "ok",
                     "checkedAt": ISO8601DateFormatter().string(from: Date()),
-                    "state": result == nil ? "unknown" : petStateID(for: self.remaining ?? 0)
+                    "state": chosen == nil ? "unknown" : petStateID(for: self.remaining ?? 0)
                 ]
                 report["displayedRemaining"] = self.number.stringValue
                 report["animationFrames"] = sprites.states.first { $0.id == self.currentSpriteID }?.frames?.count ?? 1
-                if let result {
+                report["source"] = "direct-openai"
+                if let result = chosen {
                     report["remainingPercent"] = self.remaining
                     report["windowMinutes"] = result.windowMinutes
                     report["resetsAt"] = result.resetsAt

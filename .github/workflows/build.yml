@@ -1,0 +1,19 @@
+name: Build macOS app
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and validate pixel assets
+        run: ./build.sh
+      - name: Verify local signature
+        run: codesign --verify --deep --strict "build/余粮.app"

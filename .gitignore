@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+build/
+*.dSYM/
+*.log
+.env
+.env.*
+!.env.example
+# Local working previews; canonical assets are under Assets/.
+/pixel-dogs*.gif
+/pixel-dogs*.png

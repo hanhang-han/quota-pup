@@ -29,8 +29,8 @@ cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>local.quotapup.prototype</string>
 <key>CFBundleName</key><string>余粮</string>
 <key>CFBundleDisplayName</key><string>余粮</string>
-<key>CFBundleShortVersionString</key><string>0.4.0</string>
-<key>CFBundleVersion</key><string>4</string>
+<key>CFBundleShortVersionString</key><string>0.4.1</string>
+<key>CFBundleVersion</key><string>5</string>
 <key>LSUIElement</key><true/>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
@@ -43,5 +43,10 @@ case "$target_arch" in
   *) echo "Unsupported architecture: $target_arch" >&2; exit 1 ;;
 esac
 xcrun swiftc -swift-version 5 -target "${target_arch}-apple-macosx14.0" -O -framework AppKit -module-cache-path "$project_dir/.build/module-cache" "$project_dir"/Sources/*.swift -o "$app_dir/Contents/MacOS/QuotaPup"
-codesign --force --sign - "$app_dir"
+signing_identity="${QUOTAPUP_SIGNING_IDENTITY:--}"
+if [[ "$signing_identity" == "-" ]]; then
+  codesign --force --sign - "$app_dir"
+else
+  codesign --force --sign "$signing_identity" --options runtime --timestamp "$app_dir"
+fi
 echo "$app_dir"

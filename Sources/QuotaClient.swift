@@ -162,7 +162,7 @@ final class QuotaClient {
             var request = URLRequest(url: endpoint, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 25)
             request.setValue("Bearer \(credential.accessToken)", forHTTPHeaderField: "Authorization")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
-            request.setValue("QuotaPup/0.4.0", forHTTPHeaderField: "User-Agent")
+            request.setValue("QuotaPup/0.4.1", forHTTPHeaderField: "User-Agent")
             if let account = credential.accountID { request.setValue(account, forHTTPHeaderField: "ChatGPT-Account-Id") }
             let data: Data
             let response: URLResponse

@@ -32,8 +32,8 @@ API Key 登录不能用于查询 ChatGPT 订阅额度。首次登录和共享令
 
 ## 构建与运行
 
-预编译应用可在 [GitHub Releases](https://github.com/hanhang-han/quota-pup/releases) 下载。选择与 Mac 芯片对应的文件，解压后将“余粮.app”拖到“应用程序”目录即可。
-当前发布包为 Apple Silicon（arm64）版本。应用采用本地 ad-hoc 签名，尚未通过 Apple 公证；也可以按以下步骤自行编译。
+预编译应用在 [GitHub Releases](https://github.com/hanhang-han/quota-pup/releases) 发布。v0.4.0 只有本地 ad-hoc 签名，下载后可能被 Gatekeeper 阻止；该下载已撤回，正在准备正式签名、公证的修正版。源码仍可按以下步骤自行编译。
+后续分发包必须完成 Developer ID Application 签名、Apple 公证和票据装订，发布脚本会逐步验证。正式公证通过前，不将本地签名校验等同于 Gatekeeper 放行。
 
 ```bash
 git clone https://github.com/hanhang-han/quota-pup.git
@@ -44,13 +44,20 @@ open "build/余粮.app"
 
 构建不需要下载 Swift 第三方依赖。编译目标明确为 macOS 14，与应用的最低系统版本声明一致。更早系统与其他设备尚未完成真机兼容性验证。
 
-创建应用压缩包与 SHA-256 校验文件：
+维护者首次配置 Apple 公证凭证（在自己的终端中输入，密码存入 Keychain）：
 
 ```bash
-./release.sh
+./setup-notarization.sh quota-pup-notary
 ```
 
-产物位于 build/release/。打包脚本会先构建并运行离线检查，不会读取真实账号凭证。
+创建正式应用压缩包与 SHA-256 校验文件：
+
+```bash
+QUOTAPUP_SIGNING_IDENTITY='Developer ID Application: Your Name (TEAMID)' \
+QUOTAPUP_NOTARY_PROFILE='quota-pup-notary' ./release.sh
+```
+
+产物位于 build/release/。脚本会先构建、运行离线检查、签名并提交 Apple 公证；只有 Apple 返回 Accepted、票据装订验证和 Gatekeeper 校验通过后才生成最终压缩包。公证提交中间文件与结果位于被 Git 忽略的 build/notarization/。签名和公证凭证不写入源码。
 
 默认启动后展开小狗面板。只在菜单栏后台运行：
 
